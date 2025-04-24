@@ -11,6 +11,8 @@ service Auth {
 	rpc RefreshToken (RefreshTokenRequest) returns (RefreshTokenResponse);
 }
 
+// Register - Регистрация пользвателя
+
 message RegisterRequest {
 	string email = 1;
 	string password = 2;
