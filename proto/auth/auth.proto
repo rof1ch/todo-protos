@@ -49,7 +49,7 @@ message IsAdminResponse {
 	bool is_admin = 1;
 }
 
-// RefreshToken - Обновляет access_token использую refresh_token
+// RefreshToken - Обновляет access_token использую refresh_token 
 
 message RefreshTokenRequest {
 	string refresh_token = 1;
