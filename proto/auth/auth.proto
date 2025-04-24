@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "rof1ch.auth.v1;authv1";
+
+service Auth {
+	rpc Register (RegisterRequest) returns (RegisterResponse);
+	rpc Login (LoginRequest) returns (LoginResponse);
+	rpc IsAdmin (IsAdminRequest) returns (IsAdminResponse);
+	rpc RefreshToken (RefreshTokenRequest) returns (RefreshTokenResponse);
+}
+
+message RegisterRequest {
+	string email = 1;
+	string password = 2;
+}
+
+message RegisterResponse {
+	int64 user_id = 1;
+	string access_token = 2;
+	string refresh_token = 3;
+}
+
+message LoginRequest {
+	string email = 1;
+	string password = 2;
+	int32 app_id = 3;
+}
+
+message LoginResponse {
+	string access_token = 1;
+	string refresh_token = 2;
+}
+
+message IsAdminRequest {
+	int64 user_id = 1;
+	int32 app_id = 2;
+}
+
+message IsAdminResponse {
+	bool is_admin = 1;
+}
+
+message RefreshTokenRequest {
+	string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+	string access_token = 1;
+}

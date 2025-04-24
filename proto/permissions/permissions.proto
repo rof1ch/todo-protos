@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package permissions;
+
+option go_package = "rof1ch.permissions.v1;permissionsv1";
+
+service Permissions {
+	rpc AssignPrivilages (AssignPrivilagesRequest) returns (AssignPrivilagesResponse);
+	rpc HasPrivilage (HasPrivilageRequest) returns (HasPrivilageResponse);
+	rpc GetPrivilages (GetPrivilagesRequest) returns (GetPrivilagesResponse);
+}
+
+// AssignPrivilages - добавление привелегий пользователю
+
+message AssignPrivilagesRequest {
+	int64 user_id = 1;
+	int32 app_id = 2;
+	repeated string privilages = 3;
+}
+
+message AssignPrivilagesResponse {
+	bool success = 1;
+}
+
+// HasPrivilage = Проверка привелегии у пользователя
+
+message HasPrivilageRequest {
+	int64 user_id = 1;
+	string privilage = 2;
+	int32 app_id = 3;
+}
+
+message HasPrivilageResponse {
+	bool has_privilage = 1;
+}
+
+// GetPrivilages - Получить список привелегий пользователя
+
+message GetPrivilagesRequest {
+	int64 user_id = 1;
+	int32 app_id = 2;
+}
+
+message GetPrivilagesResponse {
+	repeated string privilages = 1;
+}
