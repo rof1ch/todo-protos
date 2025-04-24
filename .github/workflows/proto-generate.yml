@@ -38,11 +38,38 @@ jobs:
       - name: Generate proto code
         run: task gen
 
-      # (опционально) Проверка, что код сгенерирован и всё в гите
-      - name: Check for uncommitted changes
+      # Автокоммит изменений
+      - name: Commit changes if any
         run: |
-          if [[ -n "$(git status --porcelain)" ]]; then
-            echo "❌ Есть несохранённые изменения после генерации. Закоммить их!" && exit 1
-          else
-            echo "✅ Всё чисто."
-          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Auto-generated proto files"
+          git push origin HEAD
+
+      # Создание нового тега на основе последнего
+      - name: Get last tag and increment version
+        id: version
+        run: |
+          # Получаем последний тег
+          LAST_TAG=$(git describe --tags --abbrev=0 || echo "v0.0.0")
+          echo "Last tag: $LAST_TAG"
+          
+          # Извлекаем версии
+          VERSION=${LAST_TAG/v/}  # Убираем 'v' из начала
+          IFS='.' read -r -a VERSION_ARRAY <<< "$VERSION"
+          
+          # Увеличиваем последнюю часть версии (PATCH)
+          PATCH="${VERSION_ARRAY[2]}"
+          NEW_PATCH=$((PATCH + 1))
+
+          # Собираем новый тег
+          NEW_TAG="v${VERSION_ARRAY[0]}.${VERSION_ARRAY[1]}.$NEW_PATCH"
+          echo "New tag: $NEW_TAG"
+          echo "::set-output name=new_tag::$NEW_TAG"
+
+      # Пушим новый тег
+      - name: Create and push new tag
+        run: |
+          git tag "${{ steps.version.outputs.new_tag }}"
+          git push origin "${{ steps.version.outputs.new_tag }}"
