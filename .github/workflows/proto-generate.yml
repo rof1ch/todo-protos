@@ -11,10 +11,15 @@ on:
 jobs:
   generate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Необходимо для работы с тегами
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -24,7 +29,7 @@ jobs:
       - name: Install protoc
         uses: arduino/setup-protoc@v2
         with:
-          version: '25.2' # или другая нужная версия
+          version: '25.2'
 
       - name: Install Go plugins for protoc
         run: |
@@ -38,38 +43,42 @@ jobs:
       - name: Generate proto code
         run: task gen
 
-      # Автокоммит изменений
       - name: Commit changes if any
+        id: commit
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Auto-generated proto files"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD
+          if git diff --quiet; then
+            echo "No changes to commit"
+            echo "changes_made=false" >> $GITHUB_OUTPUT
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "Auto-generated proto files"
+            git push
+            echo "changes_made=true" >> $GITHUB_OUTPUT
+          fi
 
-      # Создание нового тега на основе последнего
       - name: Get last tag and increment version
+        if: steps.commit.outputs.changes_made == 'true'
         id: version
         run: |
-          # Получаем последний тег
-          LAST_TAG=$(git describe --tags --abbrev=0 || echo "v0.0.0")
+          # Получаем все теги
+          git fetch --tags
+          
+          # Получаем последний тег или используем v0.0.0 по умолчанию
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           echo "Last tag: $LAST_TAG"
           
-          # Извлекаем версии
-          VERSION=${LAST_TAG/v/}  # Убираем 'v' из начала
+          # Увеличиваем версию
+          VERSION=${LAST_TAG/v/}
           IFS='.' read -r -a VERSION_ARRAY <<< "$VERSION"
-          
-          # Увеличиваем последнюю часть версии (PATCH)
-          PATCH="${VERSION_ARRAY[2]}"
-          NEW_PATCH=$((PATCH + 1))
-
-          # Собираем новый тег
+          NEW_PATCH=$((VERSION_ARRAY[2] + 1))
           NEW_TAG="v${VERSION_ARRAY[0]}.${VERSION_ARRAY[1]}.$NEW_PATCH"
           echo "New tag: $NEW_TAG"
-          echo "::set-output name=new_tag::$NEW_TAG"
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
 
-      # Пушим новый тег
       - name: Create and push new tag
+        if: steps.commit.outputs.changes_made == 'true'
         run: |
           git tag "${{ steps.version.outputs.new_tag }}"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} "${{ steps.version.outputs.new_tag }}"
+          git push origin "${{ steps.version.outputs.new_tag }}"
