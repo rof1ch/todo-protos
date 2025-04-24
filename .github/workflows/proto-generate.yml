@@ -45,7 +45,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "Auto-generated proto files"
-          git push origin HEAD
+          git push https://github.com/${{ github.repository }} HEAD
 
       # Создание нового тега на основе последнего
       - name: Get last tag and increment version
@@ -54,11 +54,11 @@ jobs:
           # Получаем последний тег
           LAST_TAG=$(git describe --tags --abbrev=0 || echo "v0.0.0")
           echo "Last tag: $LAST_TAG"
-          
+
           # Извлекаем версии
           VERSION=${LAST_TAG/v/}  # Убираем 'v' из начала
           IFS='.' read -r -a VERSION_ARRAY <<< "$VERSION"
-          
+
           # Увеличиваем последнюю часть версии (PATCH)
           PATCH="${VERSION_ARRAY[2]}"
           NEW_PATCH=$((PATCH + 1))
@@ -72,4 +72,4 @@ jobs:
       - name: Create and push new tag
         run: |
           git tag "${{ steps.version.outputs.new_tag }}"
-          git push origin "${{ steps.version.outputs.new_tag }}"
+          git push https://github.com/${{ github.repository }} "${{ steps.version.outputs.new_tag }}"
