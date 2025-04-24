@@ -24,6 +24,9 @@ message RegisterResponse {
 	string refresh_token = 3;
 }
 
+
+// Login - Вход пользователя в систему 
+
 message LoginRequest {
 	string email = 1;
 	string password = 2;
